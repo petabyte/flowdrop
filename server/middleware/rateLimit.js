@@ -24,4 +24,11 @@ const uploadLimiter = rateLimit({
   },
 });
 
-module.exports = { apiLimiter, uploadLimiter };
+/** Auth limiter: 10 attempts per 15 minutes per IP */
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too Many Requests', message: 'Too many attempts, please try again later.' },
+});
+
+module.exports = { apiLimiter, uploadLimiter, authLimiter };

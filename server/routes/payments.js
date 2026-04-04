@@ -31,9 +31,6 @@ router.post('/checkout', requireAuth, stripeRequired, async (req, res) => {
   if (!plan || !PLAN_PRICE_IDS[plan]) {
     return res.status(400).json({ error: 'plan must be "starter" or "pro".' });
   }
-  if (!PLAN_PRICE_IDS[plan]) {
-    return res.status(503).json({ error: `Set STRIPE_${plan.toUpperCase()}_PRICE_ID in your .env.` });
-  }
 
   try {
     const user = req.user;
@@ -87,7 +84,7 @@ router.get('/portal', requireAuth, stripeRequired, async (req, res) => {
 /**
  * POST /api/payments/webhook
  */
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/webhook', async (req, res) => {
   if (!stripe) return res.sendStatus(200);
 
   const sig = req.headers['stripe-signature'];

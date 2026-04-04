@@ -1,5 +1,14 @@
 let currentUser = null;
 
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 async function init() {
   const res = await fetch('/auth/me');
   if (!res.ok) { window.location.href = '/login'; return; }
@@ -53,10 +62,13 @@ async function uploadFiles(files) {
   if (res.ok) {
     results.innerHTML = data.files.map(f => `
       <div class="file-row">
-        <span class="file-name">${f.filename}</span>
+        <span class="file-name">${esc(f.filename)}</span>
         <span class="file-meta">${(f.size / 1024).toFixed(1)} KB</span>
-        <button class="btn-copy" onclick="navigator.clipboard.writeText('${f.url}')">Copy URL</button>
+        <button class="btn-copy" data-url="${esc(f.url)}">Copy URL</button>
       </div>`).join('');
+    document.querySelectorAll('#uploadResults .btn-copy').forEach(btn => {
+      btn.addEventListener('click', () => navigator.clipboard.writeText(btn.dataset.url));
+    });
   } else {
     results.innerHTML = `<p style="color:#ff6b6b">${data.error}: ${data.message}</p>`;
   }
@@ -72,13 +84,20 @@ async function loadFiles() {
     return;
   }
   container.innerHTML = data.files.map(f => `
-    <div class="file-row" id="row-${f.key}">
-      <span class="file-name">${f.filename}</span>
-      <span class="file-meta">${(f.size / 1024).toFixed(1)} KB · ${f.tier}</span>
+    <div class="file-row" id="row-${esc(f.key)}">
+      <span class="file-name">${esc(f.filename)}</span>
+      <span class="file-meta">${(f.size / 1024).toFixed(1)} KB · ${esc(f.tier)}</span>
       ${f.expires_at ? `<span class="file-meta">Expires ${new Date(f.expires_at).toLocaleDateString()}</span>` : '<span class="file-meta">Never expires</span>'}
-      <button class="btn-copy" onclick="navigator.clipboard.writeText('${f.url}')">Copy URL</button>
-      <button class="btn-delete" onclick="deleteFile('${f.key}')">Delete</button>
+      <button class="btn-copy" data-url="${esc(f.url)}">Copy URL</button>
+      <button class="btn-delete" data-key="${esc(f.key)}">Delete</button>
     </div>`).join('');
+
+  document.querySelectorAll('#filesList .btn-copy').forEach(btn => {
+    btn.addEventListener('click', () => navigator.clipboard.writeText(btn.dataset.url));
+  });
+  document.querySelectorAll('#filesList .btn-delete').forEach(btn => {
+    btn.addEventListener('click', () => deleteFile(btn.dataset.key));
+  });
 }
 
 async function deleteFile(key) {

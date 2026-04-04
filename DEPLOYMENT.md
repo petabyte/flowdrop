@@ -40,7 +40,15 @@ git push -u origin main
 
 ---
 
-## Step 3 — Add Environment Variables in Railway
+## Step 3 — Add Railway PostgreSQL
+
+1. In your Railway project, click **+ New** → **Database** → **PostgreSQL**
+2. Railway provisions the database and automatically injects `DATABASE_URL` into your project's environment
+3. No further configuration needed — the server runs migrations automatically on startup and creates the required tables
+
+---
+
+## Step 4 — Add Environment Variables in Railway
 
 In your Railway project → **Variables** tab, add all of these:
 
@@ -61,7 +69,7 @@ In your Railway project → **Variables** tab, add all of these:
 
 ---
 
-## Step 4 — Cloudflare R2 Bucket Setup
+## Step 5 — Cloudflare R2 Bucket Setup
 
 1. Cloudflare Dashboard → **R2** → Create bucket
 2. Enable **Public Access** on the bucket → note the `pub-xxx.r2.dev` URL
@@ -70,7 +78,7 @@ In your Railway project → **Variables** tab, add all of these:
 
 ---
 
-## Step 5 — Custom Domain (Optional)
+## Step 6 — Custom Domain (Optional)
 
 - In Railway: **Settings** → **Domains** → add your custom domain
 - Update `ALLOWED_ORIGINS` to include it
@@ -78,7 +86,7 @@ In your Railway project → **Variables** tab, add all of these:
 
 ---
 
-## Step 6 — Verify Deployment
+## Step 7 — Verify Deployment
 
 Once Railway deploys, hit these endpoints:
 

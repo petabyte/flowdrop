@@ -7,6 +7,7 @@ const pool = require('../lib/db-pg');
 const { users } = require('../lib/users');
 const { setSessionCookie, clearSessionCookie } = require('../lib/jwt');
 const { requireAuth } = require('../middleware/requireAuth');
+const { authLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
@@ -69,7 +70,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
 
 // ─── Email / Password ─────────────────────────────────────────────────────────
 
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password required' });
@@ -77,11 +78,12 @@ router.post('/register', async (req, res) => {
   if (password.length < 8) {
     return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
+  const normEmail = email.toLowerCase().trim();
   try {
-    const existing = await users.findByEmail(email);
+    const existing = await users.findByEmail(normEmail);
     if (existing) return res.status(409).json({ error: 'Email already registered' });
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await users.create({ email, passwordHash });
+    const user = await users.create({ email: normEmail, passwordHash });
     setSessionCookie(res, user);
     res.status(201).json({
       success: true,
@@ -93,13 +95,14 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password required' });
   }
+  const normEmail = email.toLowerCase().trim();
   try {
-    const user = await users.findByEmail(email);
+    const user = await users.findByEmail(normEmail);
     if (!user || !user.password_hash) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
