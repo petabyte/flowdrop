@@ -5,3 +5,4 @@ data/
 *.db
 *.json.secret
 client_secret*.json
+prices.csv
