@@ -1,0 +1,28 @@
+{
+  "name": "n8n-nodes-flowdrop",
+  "version": "0.1.0",
+  "description": "n8n community node for FlowDrop — API-first file hosting with Cloudflare R2",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc --watch"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/FlowDropApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/FlowDrop/FlowDrop.node.js"
+    ]
+  },
+  "keywords": ["n8n-community-node-package", "flowdrop", "file-hosting", "cloudflare-r2"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.11.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
