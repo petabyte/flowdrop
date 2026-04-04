@@ -17,6 +17,9 @@ const { TIERS } = require('./lib/tiers');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust Railway's proxy so rate limiter sees real client IPs
+app.set('trust proxy', 1);
+
 // ─── CORS ────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map((o) => o.trim()).filter(Boolean);

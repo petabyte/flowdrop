@@ -86,6 +86,16 @@ code { font-family: var(--font-mono); }
   transition: border-color var(--transition), color var(--transition) !important;
 }
 .nav-github:hover { border-color: var(--border-hover); color: var(--text-1) !important; }
+.nav-cta {
+  padding: 0.4rem 1rem;
+  background: var(--accent);
+  color: #fff !important;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: opacity var(--transition);
+}
+.nav-cta:hover { opacity: 0.85; color: #fff !important; }
 
 /* ── HERO ────────────────────────────────────────────────────── */
 .hero {
