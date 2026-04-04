@@ -168,7 +168,7 @@ export class FlowDrop implements INodeType {
           });
 
           for (const file of response.files as IDataObject[]) {
-            returnData.push({ json: file });
+            returnData.push({ json: file, pairedItem: i });
           }
         }
 
@@ -181,7 +181,7 @@ export class FlowDrop implements INodeType {
             headers: { 'x-api-key': credentials.apiKey as string },
           });
 
-          returnData.push({ json: response as IDataObject });
+          returnData.push({ json: response as IDataObject, pairedItem: i });
         }
 
         else if (operation === 'listFiles') {
@@ -200,24 +200,33 @@ export class FlowDrop implements INodeType {
           });
 
           for (const file of response.files as IDataObject[]) {
-            returnData.push({ json: file });
+            returnData.push({ json: file, pairedItem: i });
           }
         }
 
         else if (operation === 'getFileInfo') {
           const fileKey = this.getNodeParameter('fileKey', i) as string;
 
-          const response = await this.helpers.httpRequest({
-            method: 'GET',
-            url: `${baseUrl}/api/files`,
-            headers: { 'x-api-key': credentials.apiKey as string },
-            qs: { limit: 100, offset: 0 },
-          });
+          let found: Record<string, unknown> | undefined;
+          let offset = 0;
+          const pageSize = 100;
 
-          const file = (response.files as IDataObject[])
-            .find((f) => f.key === fileKey);
+          while (!found) {
+            const response = await this.helpers.httpRequest({
+              method: 'GET',
+              url: `${baseUrl}/api/files`,
+              headers: { 'x-api-key': credentials.apiKey as string },
+              qs: { limit: pageSize, offset },
+            });
 
-          if (!file) {
+            const files = response.files as Array<Record<string, unknown>>;
+            found = files.find((f) => f.key === fileKey);
+
+            if (!found && files.length < pageSize) break; // no more pages
+            offset += pageSize;
+          }
+
+          if (!found) {
             throw new NodeOperationError(
               this.getNode(),
               `File with key "${fileKey}" not found.`,
@@ -225,7 +234,7 @@ export class FlowDrop implements INodeType {
             );
           }
 
-          returnData.push({ json: file });
+          returnData.push({ json: found as IDataObject, pairedItem: i });
         }
 
       } catch (error) {
