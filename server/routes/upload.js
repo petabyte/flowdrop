@@ -120,7 +120,7 @@ router.get('/files', requireApiKey, async (req, res) => {
 
   try {
     const files = tier
-      ? await stmts.listByTier(tier, limit, offset)
+      ? await stmts.listByUserAndTier(req.user.id, tier, limit, offset)
       : await stmts.listByUser(req.user.id, limit, offset);
 
     res.json({ success: true, count: files.length, files });
@@ -139,6 +139,14 @@ router.delete('/files/:key', requireApiKey, async (req, res) => {
   }
 
   try {
+    const record = await stmts.findByKey(key);
+    if (!record) {
+      return res.status(404).json({ error: 'Not Found', message: 'File not found.' });
+    }
+    if (record.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden', message: 'You do not own this file.' });
+    }
+
     await r2Client.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key }));
     await stmts.deleteByKey(key);
     res.json({ success: true, message: `File "${key}" deleted.` });

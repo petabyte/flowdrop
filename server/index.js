@@ -33,7 +33,6 @@ app.use(cors({
 }));
 
 // ─── Body parsers ─────────────────────────────────────────────────────────────
-app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());

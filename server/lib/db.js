@@ -29,6 +29,14 @@ const stmts = {
     return rows;
   },
 
+  async listByUserAndTier(userId, tier, limit, offset) {
+    const { rows } = await pool.query(
+      'SELECT * FROM uploads WHERE user_id = $1 AND tier = $2 ORDER BY uploaded_at DESC LIMIT $3 OFFSET $4',
+      [userId, tier, limit, offset]
+    );
+    return rows;
+  },
+
   async listAll(limit, offset) {
     const { rows } = await pool.query(
       'SELECT * FROM uploads ORDER BY uploaded_at DESC LIMIT $1 OFFSET $2',
@@ -56,7 +64,7 @@ const stmts = {
   async countByTier() {
     const { rows } = await pool.query(
       `SELECT tier,
-              COUNT(*)::bigint AS count,
+              COUNT(*)::int AS count,
               COALESCE(SUM(size), 0)::bigint AS total_bytes
        FROM uploads GROUP BY tier`
     );

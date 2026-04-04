@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const stripe = require('../lib/stripe');
 const { users } = require('../lib/users');
-const { TIERS } = require('../lib/tiers');
 const { requireAuth } = require('../middleware/requireAuth');
 
 const PLAN_PRICE_IDS = {
