@@ -30,6 +30,13 @@ async function migrate() {
     )
   `);
 
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_api_key ON users(api_key)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_github_id ON users(github_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id ON users(stripe_customer_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_uploads_user_id ON uploads(user_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_uploads_expires_at ON uploads(expires_at)`);
+
   console.log('[DB] Migration complete');
 }
 

@@ -7,7 +7,7 @@
  *  - maxFileSizeMB: per-file size cap
  *  - label / price: display info
  *
- * Tier is resolved from the API key at upload time (see tierFromApiKey).
+ * Tier is stored on the user row and returned from the database.
  */
 
 const TIERS = {

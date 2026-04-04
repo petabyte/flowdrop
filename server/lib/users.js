@@ -67,10 +67,11 @@ const users = {
   },
 
   async updateStripeCustomerId(id, stripeCustomerId) {
-    await pool.query(
-      'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+    const { rows } = await pool.query(
+      'UPDATE users SET stripe_customer_id = $1 WHERE id = $2 RETURNING *',
       [stripeCustomerId, id]
     );
+    return rows[0];
   },
 };
 

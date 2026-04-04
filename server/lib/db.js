@@ -56,7 +56,7 @@ const stmts = {
   async countByTier() {
     const { rows } = await pool.query(
       `SELECT tier,
-              COUNT(*)::int AS count,
+              COUNT(*)::bigint AS count,
               COALESCE(SUM(size), 0)::bigint AS total_bytes
        FROM uploads GROUP BY tier`
     );
