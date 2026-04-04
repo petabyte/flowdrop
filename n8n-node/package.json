@@ -16,11 +16,17 @@
       "dist/nodes/FlowDrop/FlowDrop.node.js"
     ]
   },
-  "keywords": ["n8n-community-node-package", "flowdrop", "file-hosting", "cloudflare-r2"],
+  "keywords": [
+    "n8n-community-node-package",
+    "flowdrop",
+    "file-hosting",
+    "cloudflare-r2"
+  ],
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "@types/node": "^20.11.0"
+    "@types/node": "^20.11.0",
+    "n8n-workflow": "^2.13.1",
+    "typescript": "^5.3.3"
   },
   "peerDependencies": {
     "n8n-workflow": "*"
