@@ -118,7 +118,7 @@
         <div class="n8n-snippet-label">n8n HTTP Request node config</div>
         <pre class="code-block active"><code>{
   <span class="token-key">"method"</span>: <span class="token-string">"POST"</span>,
-  <span class="token-key">"url"</span>: <span class="token-string">"https://your-flowdrop.railway.app/api/upload"</span>,
+  <span class="token-key">"url"</span>: <span class="token-string">"https://flowdrop-production-6e1e.up.railway.app/api/upload"</span>,
   <span class="token-key">"headers"</span>: { <span class="token-key">"x-api-key"</span>: <span class="token-string">"{{ $vars.FLOWDROP_API_KEY }}"</span> },
   <span class="token-key">"body"</span>: { <span class="token-key">"file"</span>: <span class="token-string">"{{ $binary.data }}"</span> }
   <span class="token-comment">// Response: { "files": [{ "url": "https://cdn.../uuid.mp4" }] }</span>
@@ -190,7 +190,7 @@
         </div>
 
         <div class="code-body">
-          <pre class="code-block active" id="code-curl"><code><span class="token-keyword">curl</span> <span class="token-flag">-X POST</span> https://your-flowdrop.railway.app/api/upload \
+          <pre class="code-block active" id="code-curl"><code><span class="token-keyword">curl</span> <span class="token-flag">-X POST</span> https://flowdrop-production-6e1e.up.railway.app/api/upload \
   <span class="token-flag">-H</span> <span class="token-string">"x-api-key: your_api_key"</span> \
   <span class="token-flag">-F</span> <span class="token-string">"file=@generated-video.mp4"</span></code></pre>
 
@@ -209,7 +209,7 @@ form.<span class="token-method">append</span>(<span class="token-string">'file'<
           <pre class="code-block" id="code-python"><code><span class="token-keyword">import</span> requests
 
 res = requests.<span class="token-method">post</span>(
-  <span class="token-string">'https://your-flowdrop.railway.app/api/upload'</span>,
+  <span class="token-string">'https://flowdrop-production-6e1e.up.railway.app/api/upload'</span>,
   headers={<span class="token-string">'x-api-key'</span>: <span class="token-string">'your_api_key'</span>},
   files={<span class="token-string">'file'</span>: <span class="token-method">open</span>(<span class="token-string">'generated-video.mp4'</span>, <span class="token-string">'rb'</span>)},
 )
@@ -219,7 +219,7 @@ url = res.<span class="token-method">json</span>()[<span class="token-string">'f
           <pre class="code-block" id="code-n8n"><code><span class="token-comment">// n8n HTTP Request node settings:</span>
 {
   <span class="token-key">"method"</span>: <span class="token-string">"POST"</span>,
-  <span class="token-key">"url"</span>: <span class="token-string">"https://your-flowdrop.railway.app/api/upload"</span>,
+  <span class="token-key">"url"</span>: <span class="token-string">"https://flowdrop-production-6e1e.up.railway.app/api/upload"</span>,
   <span class="token-key">"authentication"</span>: <span class="token-string">"genericCredentialType"</span>,
   <span class="token-key">"genericAuthType"</span>: <span class="token-string">"httpHeaderAuth"</span>,
   <span class="token-comment">// Header: x-api-key = your_api_key</span>
