@@ -38,25 +38,6 @@ const TIERS = {
 };
 
 /**
- * Resolve the subscription tier from an API key.
- *
- * In production you'd look this up in a users table. For now we use
- * prefixed env-var keys so a single server can support all three tiers:
- *
- *   FREE_API_KEY=...
- *   STARTER_API_KEY=...
- *   PRO_API_KEY=...
- *
- * The general API_KEY_SECRET acts as a free-tier fallback.
- */
-function tierFromApiKey(apiKey) {
-  if (apiKey === process.env.PRO_API_KEY)     return 'pro';
-  if (apiKey === process.env.STARTER_API_KEY) return 'starter';
-  // FREE_API_KEY or the generic API_KEY_SECRET → free
-  return 'free';
-}
-
-/**
  * Calculate the ISO 8601 expiry datetime for a given tier.
  * Returns null if the tier never expires.
  *
@@ -72,4 +53,4 @@ function calcExpiresAt(tier) {
   return d.toISOString();
 }
 
-module.exports = { TIERS, tierFromApiKey, calcExpiresAt };
+module.exports = { TIERS, calcExpiresAt };
