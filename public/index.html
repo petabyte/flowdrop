@@ -11,6 +11,9 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+<script>
+  fetch('/auth/me').then(r => { if (r.ok) window.location.href = '/dashboard'; });
+</script>
 
   <!-- ── NAVBAR ─────────────────────────────────────────────── -->
   <nav class="navbar" id="navbar">
@@ -272,7 +275,7 @@ url = res.<span class="token-method">json</span>()[<span class="token-string">'f
             <li><span class="check">✓</span> REST API access</li>
             <li><span class="dim">✗</span> CDN delivery</li>
           </ul>
-          <button class="plan-btn plan-btn--outline" data-plan="free">Get Free API Key</button>
+          <button class="plan-btn plan-btn--outline" onclick="window.location.href='/signup'">Get Free API Key</button>
         </div>
 
         <div class="pricing-card pricing-card--featured" id="plan-starter">
@@ -287,7 +290,7 @@ url = res.<span class="token-method">json</span>()[<span class="token-string">'f
             <li><span class="check">✓</span> REST API access</li>
             <li><span class="check">✓</span> Global CDN delivery</li>
           </ul>
-          <button class="plan-btn plan-btn--primary" data-plan="starter">Start Starter Plan</button>
+          <button class="plan-btn plan-btn--primary" onclick="window.location.href='/signup'">Start Starter Plan</button>
         </div>
 
         <div class="pricing-card" id="plan-pro">
@@ -301,7 +304,7 @@ url = res.<span class="token-method">json</span>()[<span class="token-string">'f
             <li><span class="check">✓</span> REST API access</li>
             <li><span class="check">✓</span> Priority CDN delivery</li>
           </ul>
-          <button class="plan-btn plan-btn--outline" data-plan="pro">Go Pro</button>
+          <button class="plan-btn plan-btn--outline" onclick="window.location.href='/signup'">Go Pro</button>
         </div>
 
       </div>
