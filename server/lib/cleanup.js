@@ -13,7 +13,7 @@ const { TIERS } = require('./tiers');
  * @returns {{ deleted: number, errors: number, details: object[] }}
  */
 async function cleanupExpiredFiles() {
-  const expired = stmts.findExpired();
+  const expired = await stmts.findExpired();
 
   if (expired.length === 0) {
     console.log('[Cleanup] No expired files found.');
@@ -37,7 +37,7 @@ async function cleanupExpiredFiles() {
       );
 
       // 2. Remove from DB
-      stmts.deleteByKey(file.key);
+      await stmts.deleteByKey(file.key);
 
       deleted++;
       details.push({ key: file.key, status: 'deleted', tier: file.tier, expiredAt: file.expires_at });
