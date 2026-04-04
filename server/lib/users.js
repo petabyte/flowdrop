@@ -1,103 +1,76 @@
-/**
- * Pure-JS JSON user store.
- * Stores registered users in data/users.json:
- * {
- *   users: [{
- *     id, email, tier, apiKey,
- *     stripeCustomerId, stripeSubscriptionId,
- *     createdAt, updatedAt
- *   }]
- * }
- */
-
-const fs = require('fs');
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+const pool = require('./db-pg');
 const crypto = require('crypto');
 
-const DATA_DIR = path.join(__dirname, '..', '..', 'data');
-const USERS_PATH = path.join(DATA_DIR, 'users.json');
-
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(USERS_PATH)) fs.writeFileSync(USERS_PATH, JSON.stringify({ users: [] }), 'utf-8');
-
-function readDb() {
-  try { return JSON.parse(fs.readFileSync(USERS_PATH, 'utf-8')); }
-  catch { return { users: [] }; }
-}
-function writeDb(data) {
-  fs.writeFileSync(USERS_PATH, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-/** Generate a secure FlowDrop API key */
 function generateApiKey() {
   return `fd_${crypto.randomBytes(24).toString('hex')}`;
 }
 
 const users = {
-  findByEmail(email) {
-    return readDb().users.find((u) => u.email === email) || null;
+  async findByEmail(email) {
+    const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    return rows[0] || null;
   },
 
-  findByApiKey(apiKey) {
-    return readDb().users.find((u) => u.apiKey === apiKey) || null;
+  async findById(id) {
+    const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    return rows[0] || null;
   },
 
-  findByStripeCustomer(customerId) {
-    return readDb().users.find((u) => u.stripeCustomerId === customerId) || null;
+  async findByApiKey(apiKey) {
+    const { rows } = await pool.query('SELECT * FROM users WHERE api_key = $1', [apiKey]);
+    return rows[0] || null;
   },
 
-  findByStripeSubscription(subscriptionId) {
-    return readDb().users.find((u) => u.stripeSubscriptionId === subscriptionId) || null;
+  async findByGoogleId(googleId) {
+    const { rows } = await pool.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
+    return rows[0] || null;
   },
 
-  /** Create a new user with a free tier API key */
-  create(email, tier = 'free') {
-    const db = readDb();
-    const now = new Date().toISOString();
-    const user = {
-      id: uuidv4(),
-      email,
-      tier,
-      apiKey: generateApiKey(),
-      stripeCustomerId: null,
-      stripeSubscriptionId: null,
-      createdAt: now,
-      updatedAt: now,
-    };
-    db.users.push(user);
-    writeDb(db);
-    return user;
+  async findByGithubId(githubId) {
+    const { rows } = await pool.query('SELECT * FROM users WHERE github_id = $1', [githubId]);
+    return rows[0] || null;
   },
 
-  /** Upgrade a user's tier and set Stripe IDs after a successful payment */
-  upgrade(email, tier, stripeCustomerId, stripeSubscriptionId) {
-    const db = readDb();
-    const idx = db.users.findIndex((u) => u.email === email);
-    if (idx === -1) {
-      // Create user if they don't exist yet (first-time checkout)
-      return users.create(email, tier);
-    }
-    db.users[idx].tier = tier;
-    db.users[idx].stripeCustomerId = stripeCustomerId;
-    db.users[idx].stripeSubscriptionId = stripeSubscriptionId;
-    db.users[idx].updatedAt = new Date().toISOString();
-    // Issue a fresh API key on upgrade
-    db.users[idx].apiKey = generateApiKey();
-    writeDb(db);
-    return db.users[idx];
+  async findByStripeCustomerId(stripeCustomerId) {
+    const { rows } = await pool.query(
+      'SELECT * FROM users WHERE stripe_customer_id = $1',
+      [stripeCustomerId]
+    );
+    return rows[0] || null;
   },
 
-  /** Downgrade to free tier on subscription cancellation */
-  downgrade(stripeCustomerId) {
-    const db = readDb();
-    const idx = db.users.findIndex((u) => u.stripeCustomerId === stripeCustomerId);
-    if (idx === -1) return null;
-    db.users[idx].tier = 'free';
-    db.users[idx].stripeSubscriptionId = null;
-    db.users[idx].updatedAt = new Date().toISOString();
-    writeDb(db);
-    return db.users[idx];
+  async create({ email, passwordHash = null, googleId = null, githubId = null }) {
+    const apiKey = generateApiKey();
+    const { rows } = await pool.query(
+      `INSERT INTO users (email, password_hash, google_id, github_id, api_key)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [email, passwordHash, googleId, githubId, apiKey]
+    );
+    return rows[0];
+  },
+
+  async updateTier(id, tier) {
+    const { rows } = await pool.query(
+      'UPDATE users SET tier = $1 WHERE id = $2 RETURNING *',
+      [tier, id]
+    );
+    return rows[0];
+  },
+
+  async updateApiKey(id) {
+    const apiKey = generateApiKey();
+    const { rows } = await pool.query(
+      'UPDATE users SET api_key = $1 WHERE id = $2 RETURNING *',
+      [apiKey, id]
+    );
+    return rows[0];
+  },
+
+  async updateStripeCustomerId(id, stripeCustomerId) {
+    await pool.query(
+      'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+      [stripeCustomerId, id]
+    );
   },
 };
 
