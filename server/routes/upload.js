@@ -1,20 +1,19 @@
 const express = require('express');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
-const { DeleteObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 
 const r2Client = require('../lib/r2');
 const { stmts } = require('../lib/db');
-const { tierFromApiKey, calcExpiresAt, TIERS } = require('../lib/tiers');
+const { calcExpiresAt, TIERS } = require('../lib/tiers');
 const { cleanupExpiredFiles, getRetentionSummary } = require('../lib/cleanup');
 const { requireApiKey } = require('../middleware/auth');
 const { uploadLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
-// Allowed MIME types
 const ALLOWED_TYPES = [
   'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
   'video/mp4', 'video/webm', 'video/ogg',
@@ -40,11 +39,7 @@ function buildUploader(maxFileSizeMB) {
         cb(null, `${uuidv4()}${ext}`);
       },
       metadata: (req, file, cb) => {
-        cb(null, {
-          originalName: file.originalname,
-          uploadedAt: new Date().toISOString(),
-          tier: req.userTier || 'free',
-        });
+        cb(null, { originalName: file.originalname, uploadedAt: new Date().toISOString(), tier: req.userTier || 'free' });
       },
     }),
     limits: { fileSize: maxFileSizeMB * 1024 * 1024 },
@@ -55,23 +50,14 @@ function buildUploader(maxFileSizeMB) {
   });
 }
 
-// ─── Middleware: resolve tier from API key ─────────────────────────────────────
-function resolveTier(req, res, next) {
-  const apiKey = req.headers['x-api-key'] || req.query.api_key;
-  req.userTier = tierFromApiKey(apiKey);
-  req.tierConfig = TIERS[req.userTier];
-  next();
-}
-
 /**
  * POST /api/upload
- * Streams files to R2, records each upload in SQLite with tier + expiry.
  */
-router.post('/upload', uploadLimiter, requireApiKey, resolveTier, (req, res) => {
+router.post('/upload', uploadLimiter, requireApiKey, (req, res) => {
   const maxSizeMB = req.tierConfig.maxFileSizeMB;
   const uploader = buildUploader(maxSizeMB);
 
-  uploader.array('file', 10)(req, res, (err) => {
+  uploader.array('file', 10)(req, res, async (err) => {
     if (err) {
       if (err.code === 'LIMIT_FILE_SIZE') {
         return res.status(413).json({
@@ -89,36 +75,35 @@ router.post('/upload', uploadLimiter, requireApiKey, resolveTier, (req, res) => 
     const now = new Date().toISOString();
     const results = [];
 
-    for (const file of req.files) {
-      const id = file.key.split('.')[0]; // UUID
-      const expiresAt = calcExpiresAt(req.userTier);
-      const url = `${process.env.R2_PUBLIC_URL}/${file.key}`;
+    try {
+      for (const file of req.files) {
+        const id = file.key.split('.')[0];
+        const expiresAt = calcExpiresAt(req.userTier);
+        const url = `${process.env.R2_PUBLIC_URL}/${file.key}`;
 
-      // Persist to SQLite
-      stmts.insert({
-        id,
-        key: file.key,
-        filename: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-        url,
-        tier: req.userTier,
-        uploaded_at: now,
-        expires_at: expiresAt,
-      });
+        await stmts.insert({
+          id,
+          user_id: req.user.id,
+          key: file.key,
+          filename: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+          url,
+          tier: req.userTier,
+          uploaded_at: now,
+          expires_at: expiresAt,
+        });
 
-      results.push({
-        id,
-        key: file.key,
-        filename: file.originalname,
-        size: file.size,
-        mimetype: file.mimetype,
-        url,
-        tier: req.userTier,
-        uploadedAt: now,
-        expiresAt,
-        retention: req.tierConfig.description,
-      });
+        results.push({
+          id, key: file.key, filename: file.originalname,
+          size: file.size, mimetype: file.mimetype, url,
+          tier: req.userTier, uploadedAt: now, expiresAt,
+          retention: req.tierConfig.description,
+        });
+      }
+    } catch (dbErr) {
+      console.error('[Upload] DB insert error:', dbErr.message);
+      return res.status(500).json({ error: 'Server Error', message: 'Failed to record upload.' });
     }
 
     res.status(200).json({ success: true, count: results.length, files: results });
@@ -127,23 +112,25 @@ router.post('/upload', uploadLimiter, requireApiKey, resolveTier, (req, res) => 
 
 /**
  * GET /api/files
- * List uploads from the DB (filtered by tier if ?tier= param provided).
  */
-router.get('/files', requireApiKey, (req, res) => {
+router.get('/files', requireApiKey, async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit || '20', 10), 100);
   const offset = parseInt(req.query.offset || '0', 10);
   const tier = req.query.tier;
 
-  const files = tier
-    ? stmts.listByTier(tier, limit, offset)
-    : stmts.listAll(limit, offset);
+  try {
+    const files = tier
+      ? await stmts.listByTier(tier, limit, offset)
+      : await stmts.listByUser(req.user.id, limit, offset);
 
-  res.json({ success: true, count: files.length, files });
+    res.json({ success: true, count: files.length, files });
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error', message: err.message });
+  }
 });
 
 /**
  * DELETE /api/files/:key
- * Delete a file from both R2 and the DB.
  */
 router.delete('/files/:key', requireApiKey, async (req, res) => {
   const key = req.params.key;
@@ -152,10 +139,8 @@ router.delete('/files/:key', requireApiKey, async (req, res) => {
   }
 
   try {
-    await r2Client.send(
-      new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key })
-    );
-    stmts.deleteByKey(key);
+    await r2Client.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key }));
+    await stmts.deleteByKey(key);
     res.json({ success: true, message: `File "${key}" deleted.` });
   } catch (err) {
     console.error('Delete error:', err);
@@ -165,7 +150,6 @@ router.delete('/files/:key', requireApiKey, async (req, res) => {
 
 /**
  * POST /api/admin/cleanup
- * Manually trigger expired file cleanup (admin use or testing).
  */
 router.post('/admin/cleanup', requireApiKey, async (req, res) => {
   try {
@@ -178,19 +162,21 @@ router.post('/admin/cleanup', requireApiKey, async (req, res) => {
 
 /**
  * GET /api/admin/stats
- * Per-tier upload counts and storage usage.
  */
-router.get('/admin/stats', requireApiKey, (req, res) => {
-  const stats = stmts.countByTier();
-  const retention = getRetentionSummary();
-
-  res.json({
-    success: true,
-    tiers: retention.map((t) => {
-      const s = stats.find((r) => r.tier === t.tier) || { count: 0, total_bytes: 0 };
-      return { ...t, uploads: s.count, storageBytes: s.total_bytes };
-    }),
-  });
+router.get('/admin/stats', requireApiKey, async (req, res) => {
+  try {
+    const stats = await stmts.countByTier();
+    const retention = getRetentionSummary();
+    res.json({
+      success: true,
+      tiers: retention.map((t) => {
+        const s = stats.find((r) => r.tier === t.tier) || { count: 0, total_bytes: 0 };
+        return { ...t, uploads: s.count, storageBytes: Number(s.total_bytes) };
+      }),
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error', message: err.message });
+  }
 });
 
 module.exports = router;
