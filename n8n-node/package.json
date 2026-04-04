@@ -22,6 +22,7 @@
     "file-hosting",
     "cloudflare-r2"
   ],
+  "files": ["dist", "index.js"],
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.11.0",
