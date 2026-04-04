@@ -1,11 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#667eea"/>
-      <stop offset="100%" style="stop-color:#764ba2"/>
-    </linearGradient>
-  </defs>
-  <rect width="60" height="60" rx="12" fill="url(#g)"/>
-  <path d="M30 14 L42 26 H34 V38 H26 V26 H18 Z" fill="white"/>
-  <rect x="18" y="42" width="24" height="4" rx="2" fill="white"/>
+  <!-- Dark background matching FlowDrop brand -->
+  <rect width="60" height="60" rx="13" fill="#0f0f1a"/>
+  <!-- Orange droplet -->
+  <path d="M30 9 C32 9,44 22,44 36 A14 14 0 0 1 16 36 C16 22,28 9,30 9Z" fill="#FF4F00"/>
+  <!-- White upload arrow (cut into droplet) -->
+  <polygon points="30,21 22,30 26,30 26,40 34,40 34,30 38,30" fill="white"/>
 </svg>
