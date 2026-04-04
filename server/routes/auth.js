@@ -12,56 +12,60 @@ const router = express.Router();
 
 // ─── Passport OAuth Strategies ───────────────────────────────────────────────
 
-passport.use(new GoogleStrategy(
-  {
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: `${process.env.APP_URL}/auth/google/callback`,
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      let user = await users.findByGoogleId(profile.id);
-      if (!user) {
-        const email = profile.emails?.[0]?.value;
-        if (!email) return done(new Error('Google account has no email'));
-        user = await users.findByEmail(email);
-        if (user) {
-          await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [profile.id, user.id]);
-          user = await users.findById(user.id);
-        } else {
-          user = await users.create({ email, googleId: profile.id });
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${process.env.APP_URL}/auth/google/callback`,
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await users.findByGoogleId(profile.id);
+        if (!user) {
+          const email = profile.emails?.[0]?.value;
+          if (!email) return done(new Error('Google account has no email'));
+          user = await users.findByEmail(email);
+          if (user) {
+            await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [profile.id, user.id]);
+            user = await users.findById(user.id);
+          } else {
+            user = await users.create({ email, googleId: profile.id });
+          }
         }
-      }
-      done(null, user);
-    } catch (err) { done(err); }
-  }
-));
+        done(null, user);
+      } catch (err) { done(err); }
+    }
+  ));
+}
 
-passport.use(new GitHubStrategy(
-  {
-    clientID: process.env.GITHUB_CLIENT_ID,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: `${process.env.APP_URL}/auth/github/callback`,
-    scope: ['user:email'],
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      let user = await users.findByGithubId(String(profile.id));
-      if (!user) {
-        const email = profile.emails?.[0]?.value;
-        if (!email) return done(new Error('GitHub account has no public email'));
-        user = await users.findByEmail(email);
-        if (user) {
-          await pool.query('UPDATE users SET github_id = $1 WHERE id = $2', [String(profile.id), user.id]);
-          user = await users.findById(user.id);
-        } else {
-          user = await users.create({ email, githubId: String(profile.id) });
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+  passport.use(new GitHubStrategy(
+    {
+      clientID: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      callbackURL: `${process.env.APP_URL}/auth/github/callback`,
+      scope: ['user:email'],
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await users.findByGithubId(String(profile.id));
+        if (!user) {
+          const email = profile.emails?.[0]?.value;
+          if (!email) return done(new Error('GitHub account has no public email'));
+          user = await users.findByEmail(email);
+          if (user) {
+            await pool.query('UPDATE users SET github_id = $1 WHERE id = $2', [String(profile.id), user.id]);
+            user = await users.findById(user.id);
+          } else {
+            user = await users.create({ email, githubId: String(profile.id) });
+          }
         }
-      }
-      done(null, user);
-    } catch (err) { done(err); }
-  }
-));
+        done(null, user);
+      } catch (err) { done(err); }
+    }
+  ));
+}
 
 // ─── Email / Password ─────────────────────────────────────────────────────────
 
@@ -134,16 +138,32 @@ router.post('/regenerate-key', requireAuth, async (req, res) => {
 
 // ─── OAuth ────────────────────────────────────────────────────────────────────
 
-router.get('/google', passport.authenticate('google', { scope: ['email', 'profile'], session: false }));
-router.get('/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth' }),
-  (req, res) => { setSessionCookie(res, req.user); res.redirect('/dashboard'); }
-);
+router.get('/google', (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    return res.status(503).json({ error: 'Google OAuth is not configured.' });
+  }
+  passport.authenticate('google', { scope: ['email', 'profile'], session: false })(req, res, next);
+});
 
-router.get('/github', passport.authenticate('github', { scope: ['user:email'], session: false }));
-router.get('/github/callback',
-  passport.authenticate('github', { session: false, failureRedirect: '/login?error=oauth' }),
-  (req, res) => { setSessionCookie(res, req.user); res.redirect('/dashboard'); }
-);
+router.get('/google/callback', (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    return res.redirect('/login?error=oauth');
+  }
+  passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth' })(req, res, next);
+}, (req, res) => { setSessionCookie(res, req.user); res.redirect('/dashboard'); });
+
+router.get('/github', (req, res, next) => {
+  if (!process.env.GITHUB_CLIENT_ID) {
+    return res.status(503).json({ error: 'GitHub OAuth is not configured.' });
+  }
+  passport.authenticate('github', { scope: ['user:email'], session: false })(req, res, next);
+});
+
+router.get('/github/callback', (req, res, next) => {
+  if (!process.env.GITHUB_CLIENT_ID) {
+    return res.redirect('/login?error=oauth');
+  }
+  passport.authenticate('github', { session: false, failureRedirect: '/login?error=oauth' })(req, res, next);
+}, (req, res) => { setSessionCookie(res, req.user); res.redirect('/dashboard'); });
 
 module.exports = { router, passport };
