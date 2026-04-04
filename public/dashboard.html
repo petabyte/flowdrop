@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — FlowDrop</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .dash-nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .dash-nav .logo { font-size: 1.4rem; font-weight: 700; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .dash-nav .user-info { display: flex; align-items: center; gap: 12px; }
+    .tier-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+    .tier-badge.free { background: rgba(255,255,255,0.1); color: #aaa; }
+    .tier-badge.starter { background: rgba(102,126,234,0.2); color: #667eea; }
+    .tier-badge.pro { background: rgba(118,75,162,0.3); color: #a78bfa; }
+    .btn-logout { padding: 8px 16px; background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #aaa; cursor: pointer; font-size: 0.875rem; }
+    .dash-tabs { display: flex; gap: 4px; padding: 24px 32px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .tab-btn { padding: 10px 20px; background: transparent; border: none; color: #888; cursor: pointer; font-size: 0.95rem; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tab-btn.active { color: #fff; border-bottom-color: #667eea; }
+    .dash-content { padding: 32px; max-width: 900px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .file-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.06); }
+    .file-row .file-name { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-row .file-meta { color: #666; font-size: 0.8rem; white-space: nowrap; }
+    .btn-copy { padding: 5px 12px; background: rgba(102,126,234,0.15); border: 1px solid rgba(102,126,234,0.3); border-radius: 6px; color: #667eea; cursor: pointer; font-size: 0.8rem; }
+    .btn-delete { padding: 5px 12px; background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.2); border-radius: 6px; color: #ff6b6b; cursor: pointer; font-size: 0.8rem; }
+    .account-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .account-card h3 { margin-bottom: 16px; font-size: 1rem; color: #ccc; }
+    .api-key-row { display: flex; align-items: center; gap: 10px; }
+    .api-key-display { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .section-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; }
+    .empty-state { text-align: center; padding: 60px 0; color: #555; }
+    #dropZone { border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 60px; text-align: center; cursor: pointer; margin-bottom: 24px; transition: border-color 0.2s; }
+    #dropZone:hover { border-color: #667eea; }
+  </style>
+</head>
+<body>
+  <nav class="dash-nav">
+    <div class="logo">FlowDrop</div>
+    <div class="user-info">
+      <span id="userEmail" style="color:#888;font-size:0.9rem"></span>
+      <span id="tierBadge" class="tier-badge"></span>
+      <button class="btn-logout" id="logoutBtn">Log out</button>
+    </div>
+  </nav>
+
+  <div class="dash-tabs">
+    <button class="tab-btn active" data-tab="upload">Upload</button>
+    <button class="tab-btn" data-tab="files">My Files</button>
+    <button class="tab-btn" data-tab="account">Account</button>
+    <button class="tab-btn" data-tab="billing">Billing</button>
+  </div>
+
+  <div class="dash-content">
+    <div class="tab-panel active" id="tab-upload">
+      <div class="section-title">Upload Files</div>
+      <div id="dropZone">
+        <p style="color:#888">Drag &amp; drop files here, or <label for="fileInput" style="color:#667eea;cursor:pointer">browse</label></p>
+        <input type="file" id="fileInput" multiple style="display:none" />
+      </div>
+      <div id="uploadResults"></div>
+    </div>
+
+    <div class="tab-panel" id="tab-files">
+      <div class="section-title">My Files</div>
+      <div id="filesList"><div class="empty-state">Loading...</div></div>
+    </div>
+
+    <div class="tab-panel" id="tab-account">
+      <div class="section-title">Account</div>
+      <div class="account-card">
+        <h3>API Key</h3>
+        <div class="api-key-row">
+          <span class="api-key-display" id="apiKeyDisplay"></span>
+          <button class="btn-copy" id="copyKeyBtn">Copy</button>
+          <button class="btn-delete" id="regenKeyBtn">Regenerate</button>
+        </div>
+        <p style="color:#666;font-size:0.8rem;margin-top:12px">Use as the <code>x-api-key</code> header when uploading via API.</p>
+      </div>
+      <div class="account-card">
+        <h3>Account Details</h3>
+        <p style="color:#888;font-size:0.9rem">Email: <span id="accountEmail" style="color:#fff"></span></p>
+        <p style="color:#888;font-size:0.9rem;margin-top:8px">Member since: <span id="memberSince" style="color:#fff"></span></p>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-billing">
+      <div class="section-title">Billing</div>
+      <div class="account-card">
+        <h3>Current Plan</h3>
+        <p>You are on the <strong id="billingTier"></strong> plan.</p>
+        <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
+          <button id="upgradeStarterBtn" style="padding:10px 20px;border:none;border-radius:8px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;cursor:pointer;font-size:0.9rem;">Upgrade to Starter — $9/mo</button>
+          <button id="upgradeProBtn" style="padding:10px 20px;border:none;border-radius:8px;background:linear-gradient(135deg,#764ba2,#f093fb);color:#fff;cursor:pointer;font-size:0.9rem;">Upgrade to Pro — $29/mo</button>
+          <button id="portalBtn" style="padding:10px 20px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;background:transparent;color:#aaa;cursor:pointer;font-size:0.9rem;">Manage Billing</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
