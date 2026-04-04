@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to FlowDrop!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .success-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+    .success-card {
+      background: var(--bg-1);
+      border: 1px solid rgba(0, 200, 100, 0.3);
+      border-radius: 20px;
+      padding: 48px 40px;
+      max-width: 540px;
+      width: 100%;
+      text-align: center;
+      animation: fadeUp 0.6s ease forwards;
+      box-shadow: 0 0 60px rgba(0, 200, 100, 0.1);
+    }
+    .success-icon { font-size: 3.5rem; margin-bottom: 16px; }
+    .success-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .success-subtitle { color: var(--text-2); font-size: 1rem; margin-bottom: 32px; }
+    .key-box {
+      background: var(--bg-0);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .key-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+    .key-value {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--primary);
+      word-break: break-all;
+      margin-bottom: 12px;
+    }
+    .key-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--primary-dim);
+      border: 1px solid rgba(255,79,0,0.3);
+      border-radius: 8px;
+      color: var(--primary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .key-copy-btn:hover { background: rgba(255,79,0,0.25); }
+    .key-copy-btn.copied { background: rgba(0, 200, 100, 0.15); border-color: rgba(0,200,100,0.4); color: #00c864; }
+    .tier-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+    }
+    .tier-badge.pro     { background: rgba(255,79,0,0.15); color: var(--primary); border: 1px solid var(--primary); }
+    .tier-badge.starter { background: rgba(255,200,0,0.15); color: #ffc800; border: 1px solid #ffc800; }
+    .tier-badge.free    { background: rgba(100,100,255,0.15); color: #8888ff; border: 1px solid #8888ff; }
+    .success-actions { display: flex; flex-direction: column; gap: 12px; }
+    .btn-home, .btn-manage {
+      display: block; padding: 12px 24px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer;
+    }
+    .btn-home { background: var(--primary); color: #fff; text-decoration: none; }
+    .btn-manage { border: 1.5px solid var(--border-hover); color: var(--text-1); text-decoration: none; }
+    .warning-box {
+      background: rgba(255,200,0,0.08);
+      border: 1px solid rgba(255,200,0,0.3);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 0.82rem;
+      color: #ffc800;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .loading { color: var(--text-2); margin: 48px 0; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">FlowDrop</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="success-page">
+    <div class="success-card" id="successCard">
+      <div class="loading">⏳ Loading your account details...</div>
+    </div>
+  </div>
+
+  <script>
+    const card = document.getElementById('successCard');
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+
+    async function loadSession() {
+      if (!sessionId) {
+        card.innerHTML = `
+          <div class="success-icon">❌</div>
+          <h1 class="success-title">Invalid Link</h1>
+          <p class="success-subtitle">No session ID found. Please contact support if you completed a payment.</p>
+          <a href="/" class="btn-home">Back to FlowDrop</a>
+        `;
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/payments/session/' + sessionId);
+        const data = await res.json();
+
+        if (!data.success) {
+          card.innerHTML = `
+            <div class="success-icon">⏳</div>
+            <h1 class="success-title">Almost there!</h1>
+            <p class="success-subtitle">Payment received. Your API key is being generated — refresh in a moment.</p>
+            <button onclick="location.reload()" class="btn-home" style="border:none;width:100%;text-align:center;cursor:pointer;">Refresh</button>
+          `;
+          return;
+        }
+
+        card.innerHTML = `
+          <div class="success-icon">🎉</div>
+          <h1 class="success-title">You're all set!</h1>
+          <p class="success-subtitle">Welcome to FlowDrop, ${escHtml(data.email)}.</p>
+          <div class="tier-badge ${data.tier}">${data.tier} plan</div>
+          <div class="key-box">
+            <div class="key-label">Your FlowDrop API Key</div>
+            <div class="key-value" id="apiKeyVal">${escHtml(data.apiKey)}</div>
+            <button class="key-copy-btn" id="copyBtn" onclick="copyKey()">
+              📋 Copy API Key
+            </button>
+          </div>
+          <div class="warning-box">
+            ⚠ <strong>Save this key now.</strong> For security, we do not store it in a recoverable form. If you lose it, contact support for a reset.
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:20px;">
+            Files on your <strong>${data.tier}</strong> plan: <em>${escHtml(data.retention)}</em>
+          </p>
+          <div class="success-actions">
+            <a href="/" class="btn-home" style="text-align:center;">Start Uploading →</a>
+            ${data.tier !== 'free' ? '<a href="/api/payments/portal?email=' + encodeURIComponent(data.email) + '" class="btn-manage">Manage Subscription</a>' : ''}
+          </div>
+        `;
+      } catch (err) {
+        card.innerHTML = `
+          <div class="success-icon">⚠️</div>
+          <h1 class="success-title">Something went wrong</h1>
+          <p class="success-subtitle">Could not load session: ${escHtml(err.message)}</p>
+          <a href="/" class="btn-home" style="text-align:center;">Back Home</a>
+        `;
+      }
+    }
+
+    function copyKey() {
+      const key = document.getElementById('apiKeyVal').textContent;
+      navigator.clipboard.writeText(key).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋 Copy API Key'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    loadSession();
+  </script>
+</body>
+</html>
