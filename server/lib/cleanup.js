@@ -2,6 +2,8 @@ const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const r2Client = require('./r2');
 const { stmts } = require('./db');
 const { TIERS } = require('./tiers');
+const { users } = require('./users');
+const { sendTrialReminderEmail } = require('./email');
 
 /**
  * cleanupExpiredFiles
@@ -67,4 +69,42 @@ function getRetentionSummary() {
   }));
 }
 
-module.exports = { cleanupExpiredFiles, getRetentionSummary };
+/**
+ * sendTrialReminders
+ *
+ * Finds free users whose API key expires within 3 days and who haven't
+ * received a reminder yet. Sends a Resend email to each, then marks
+ * trial_reminder_sent_at to prevent duplicates.
+ *
+ * @returns {{ sent: number, errors: number }}
+ */
+async function sendTrialReminders() {
+  const nearExpiry = await users.findUsersNearExpiry();
+
+  if (nearExpiry.length === 0) {
+    console.log('[Reminders] No trial reminders to send.');
+    return { sent: 0, errors: 0 };
+  }
+
+  console.log(`[Reminders] Sending trial reminders to ${nearExpiry.length} user(s)...`);
+
+  let sent = 0;
+  let errors = 0;
+
+  for (const user of nearExpiry) {
+    try {
+      await sendTrialReminderEmail(user.email, user.api_key_expires_at);
+      await users.updateTrialReminderSent(user.id);
+      sent++;
+      console.log(`[Reminders] ✅ Sent reminder to ${user.email}`);
+    } catch (err) {
+      errors++;
+      console.error(`[Reminders] ❌ Failed for ${user.email}:`, err.message);
+    }
+  }
+
+  console.log(`[Reminders] Done. Sent: ${sent}, Errors: ${errors}`);
+  return { sent, errors };
+}
+
+module.exports = { cleanupExpiredFiles, getRetentionSummary, sendTrialReminders };
