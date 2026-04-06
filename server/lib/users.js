@@ -42,8 +42,8 @@ const users = {
   async create({ email, passwordHash = null, googleId = null, githubId = null }) {
     const apiKey = generateApiKey();
     const { rows } = await pool.query(
-      `INSERT INTO users (email, password_hash, google_id, github_id, api_key)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      `INSERT INTO users (email, password_hash, google_id, github_id, api_key, api_key_expires_at)
+       VALUES ($1, $2, $3, $4, $5, now() + INTERVAL '7 days') RETURNING *`,
       [email, passwordHash, googleId, githubId, apiKey]
     );
     return rows[0];
@@ -51,7 +51,10 @@ const users = {
 
   async updateTier(id, tier) {
     const { rows } = await pool.query(
-      'UPDATE users SET tier = $1 WHERE id = $2 RETURNING *',
+      `UPDATE users SET
+         tier = $1,
+         api_key_expires_at = CASE WHEN $1 = 'free' THEN now() + INTERVAL '7 days' ELSE NULL END
+       WHERE id = $2 RETURNING *`,
       [tier, id]
     );
     return rows[0];
@@ -72,6 +75,24 @@ const users = {
       [stripeCustomerId, id]
     );
     return rows[0];
+  },
+
+  async findUsersNearExpiry() {
+    const { rows } = await pool.query(`
+      SELECT id, email, api_key_expires_at
+      FROM users
+      WHERE tier = 'free'
+        AND api_key_expires_at BETWEEN now() AND now() + INTERVAL '3 days'
+        AND trial_reminder_sent_at IS NULL
+    `);
+    return rows;
+  },
+
+  async updateTrialReminderSent(id) {
+    await pool.query(
+      'UPDATE users SET trial_reminder_sent_at = now() WHERE id = $1',
+      [id]
+    );
   },
 };
 
