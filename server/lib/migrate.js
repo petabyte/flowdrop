@@ -37,6 +37,23 @@ async function migrate() {
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_uploads_user_id ON uploads(user_id)`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_uploads_expires_at ON uploads(expires_at)`);
 
+  // Free tier trial expiry columns
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS api_key_expires_at TIMESTAMPTZ`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_reminder_sent_at TIMESTAMPTZ`);
+
+  // Backfill existing free users: expires 7 days after account creation
+  await pool.query(`
+    UPDATE users
+    SET api_key_expires_at = created_at + INTERVAL '7 days'
+    WHERE tier = 'free' AND api_key_expires_at IS NULL
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_users_trial_expiry
+    ON users(tier, api_key_expires_at)
+    WHERE tier = 'free'
+  `);
+
   console.log('[DB] Migration complete');
 }
 
