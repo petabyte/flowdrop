@@ -1,0 +1,14 @@
+2026-04-04T03:35:26.352956078Z [inf]  maxprocs: Updating GOMAXPROCS=2: determined from CPU quota
+2026-04-04T03:35:26.352962882Z [inf]  GOMEMLIMIT is updated
+2026-04-04T03:35:26.352969070Z [inf]  using config from file
+2026-04-04T03:35:26.352975329Z [inf]  adapted config to JSON
+2026-04-04T03:35:26.352981130Z [wrn]  admin endpoint disabled
+2026-04-04T03:35:26.352987049Z [inf]  automatic HTTPS is completely disabled for server
+2026-04-04T03:35:26.352992746Z [inf]  started background certificate maintenance
+2026-04-04T03:35:26.352997980Z [wrn]  HTTP/2 skipped because it requires TLS
+2026-04-04T03:35:26.353003054Z [wrn]  HTTP/3 skipped because it requires TLS
+2026-04-04T03:35:26.353011248Z [inf]  server running
+2026-04-04T03:35:26.353018492Z [inf]  serving initial configuration
+2026-04-04T03:35:26.353026416Z [inf]  cleaning storage unit
+2026-04-04T03:35:26.353031657Z [inf]  finished cleaning storage units
+2026-04-04T03:35:26.433970676Z [inf]  Starting Container

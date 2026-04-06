@@ -43,7 +43,7 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 // ─── Serve Frontend ──────────────────────────────────────────────────────────
-const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
+const PUBLIC_DIR = path.join(__dirname, 'public');
 app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 
 // ─── API Routes ──────────────────────────────────────────────────────────────
