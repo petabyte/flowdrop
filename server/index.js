@@ -44,6 +44,15 @@ app.use(passport.initialize());
 
 // ─── Serve Frontend ──────────────────────────────────────────────────────────
 const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// Prevent caching of HTML files so Cloudflare and browsers always fetch fresh
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/' || !req.path.includes('.')) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  }
+  next();
+});
+
 app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 
 // ─── API Routes ──────────────────────────────────────────────────────────────
