@@ -1,7 +1,7 @@
 const cron = require('node-cron');
-const { cleanupExpiredFiles } = require('./cleanup');
+const { cleanupExpiredFiles, sendTrialReminders } = require('./cleanup');
 
-// Schedules the file cleanup cron job.
+// Schedules the file cleanup and trial reminder cron job.
 // Default schedule: every day at 2:00 AM server time.
 // Override via CLEANUP_CRON env var using a standard cron expression.
 // Example values:
@@ -19,12 +19,18 @@ function startCleanupScheduler() {
   console.log(`[Scheduler] File cleanup job scheduled: "${schedule}"`);
 
   cron.schedule(schedule, async () => {
-    console.log(`\n[Scheduler] ⏰ Running scheduled cleanup at ${new Date().toISOString()}`);
+    console.log(`\n[Scheduler] ⏰ Running scheduled jobs at ${new Date().toISOString()}`);
     try {
-      const result = await cleanupExpiredFiles();
-      console.log('[Scheduler] Cleanup complete:', result);
+      const cleanupResult = await cleanupExpiredFiles();
+      console.log('[Scheduler] Cleanup complete:', cleanupResult);
     } catch (err) {
       console.error('[Scheduler] Cleanup job failed:', err.message);
+    }
+    try {
+      const reminderResult = await sendTrialReminders();
+      console.log('[Scheduler] Reminders complete:', reminderResult);
+    } catch (err) {
+      console.error('[Scheduler] Reminder job failed:', err.message);
     }
   });
 }
