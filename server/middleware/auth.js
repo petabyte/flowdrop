@@ -16,6 +16,15 @@ async function requireApiKey(req, res, next) {
     if (!user) {
       return res.status(403).json({ error: 'Forbidden', message: 'Invalid API key.' });
     }
+
+    if (user.api_key_expires_at && new Date(user.api_key_expires_at) <= new Date()) {
+      return res.status(401).json({
+        error: 'API key expired',
+        message: 'Your free trial has ended. Upgrade to keep uploading.',
+        upgrade_url: `${process.env.APP_URL || 'https://flowdrop-production-6e1e.up.railway.app'}/dashboard`,
+      });
+    }
+
     req.user = user;
     req.userTier = user.tier;
     req.tierConfig = TIERS[user.tier];
