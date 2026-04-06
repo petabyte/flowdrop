@@ -43,7 +43,8 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 // ─── Serve Frontend ──────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));
+const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
+app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 
 // ─── API Routes ──────────────────────────────────────────────────────────────
 app.use('/auth', authRoutes);
@@ -69,7 +70,7 @@ app.get('/api/health', (req, res) => {
 
 // ─── SPA Fallback ─────────────────────────────────────────────────────────────
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
