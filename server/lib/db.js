@@ -61,6 +61,15 @@ const stmts = {
     return rows;
   },
 
+  async countMonthlyUploadsByUser(userId) {
+    const { rows } = await pool.query(
+      `SELECT COUNT(*)::int AS count FROM uploads
+       WHERE user_id = $1 AND uploaded_at >= date_trunc('month', now())`,
+      [userId]
+    );
+    return rows[0].count;
+  },
+
   async countByTier() {
     const { rows } = await pool.query(
       `SELECT tier,

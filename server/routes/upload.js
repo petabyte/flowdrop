@@ -53,7 +53,18 @@ function buildUploader(maxFileSizeMB) {
 /**
  * POST /api/upload
  */
-router.post('/upload', uploadLimiter, requireApiKey, (req, res) => {
+router.post('/upload', uploadLimiter, requireApiKey, async (req, res) => {
+  const limit = req.tierConfig.maxUploadsPerMonth;
+  const used = await stmts.countMonthlyUploadsByUser(req.user.id);
+  if (used >= limit) {
+    return res.status(429).json({
+      error: 'Monthly upload limit reached',
+      message: `You have used all ${limit} uploads this month. Upgrade to upload more.`,
+      limit,
+      upgrade_url: `${process.env.APP_URL || 'https://flow-drop.app'}/dashboard`,
+    });
+  }
+
   const maxSizeMB = req.tierConfig.maxFileSizeMB;
   const uploader = buildUploader(maxSizeMB);
 
