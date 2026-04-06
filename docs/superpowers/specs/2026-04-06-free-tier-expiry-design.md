@@ -47,7 +47,7 @@ if user.api_key_expires_at is set AND user.api_key_expires_at <= now():
   return HTTP 401 {
     error: "API key expired",
     message: "Your free trial has ended. Upgrade to keep uploading.",
-    upgrade_url: "https://flowdrop-production-6e1e.up.railway.app/dashboard"
+    upgrade_url: "https://flow-drop.app/dashboard"
   }
 ```
 
@@ -94,7 +94,7 @@ Upgrade to keep your workflow running:
 • Starter — $9/mo: 30-day file retention, 50MB uploads, 1,000 uploads/month
 • Pro — $29/mo: Files never expire, 200MB uploads, 6,000 uploads/month
 
-[Upgrade Now →] → https://flowdrop-production-6e1e.up.railway.app/dashboard
+[Upgrade Now →] → https://flow-drop.app/dashboard
 
 ---
 You're receiving this because you have a free FlowDrop account.

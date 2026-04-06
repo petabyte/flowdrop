@@ -21,7 +21,7 @@ async function requireApiKey(req, res, next) {
       return res.status(401).json({
         error: 'API key expired',
         message: 'Your free trial has ended. Upgrade to keep uploading.',
-        upgrade_url: `${process.env.APP_URL || 'https://flowdrop-production-6e1e.up.railway.app'}/dashboard`,
+        upgrade_url: `${process.env.APP_URL || 'https://flow-drop.app'}/dashboard`,
       });
     }
 

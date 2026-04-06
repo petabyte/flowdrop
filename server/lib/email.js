@@ -1,5 +1,5 @@
 const FROM_EMAIL = process.env.FROM_EMAIL || 'FlowDrop <noreply@flowdrop.app>';
-const APP_URL = process.env.APP_URL || 'https://flowdrop-production-6e1e.up.railway.app';
+const APP_URL = process.env.APP_URL || 'https://flow-drop.app';
 
 function formatDate(isoString) {
   return new Date(isoString).toLocaleDateString('en-US', {

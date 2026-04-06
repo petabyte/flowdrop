@@ -196,7 +196,7 @@ async function requireApiKey(req, res, next) {
       return res.status(401).json({
         error: 'API key expired',
         message: 'Your free trial has ended. Upgrade to keep uploading.',
-        upgrade_url: `${process.env.APP_URL || 'https://flowdrop-production-6e1e.up.railway.app'}/dashboard`,
+        upgrade_url: `${process.env.APP_URL || 'https://flow-drop.app'}/dashboard`,
       });
     }
 
@@ -221,7 +221,7 @@ WHERE email = 'test@example.com';
 
 Then make an API call:
 ```bash
-curl -H "x-api-key: fd_yourkey" https://flowdrop-production-6e1e.up.railway.app/api/files
+curl -H "x-api-key: fd_yourkey" https://flow-drop.app/api/files
 ```
 
 Expected:
@@ -229,7 +229,7 @@ Expected:
 {
   "error": "API key expired",
   "message": "Your free trial has ended. Upgrade to keep uploading.",
-  "upgrade_url": "https://flowdrop-production-6e1e.up.railway.app/dashboard"
+  "upgrade_url": "https://flow-drop.app/dashboard"
 }
 ```
 
@@ -257,7 +257,7 @@ git commit -m "feat: block expired free tier API keys with 401 response"
 
 ```javascript
 const FROM_EMAIL = process.env.FROM_EMAIL || 'FlowDrop <noreply@flowdrop.app>';
-const APP_URL = process.env.APP_URL || 'https://flowdrop-production-6e1e.up.railway.app';
+const APP_URL = process.env.APP_URL || 'https://flow-drop.app';
 
 function formatDate(isoString) {
   return new Date(isoString).toLocaleDateString('en-US', {

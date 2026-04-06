@@ -1,6 +1,6 @@
 # n8n-nodes-flowdrop
 
-An [n8n](https://n8n.io) community node for [FlowDrop](https://flowdrop-production-6e1e.up.railway.app/) — API-first file hosting powered by Cloudflare R2.
+An [n8n](https://n8n.io) community node for [FlowDrop](https://flow-drop.app/) — API-first file hosting powered by Cloudflare R2.
 
 Upload files, manage your storage, and integrate FlowDrop into any n8n automation workflow.
 
