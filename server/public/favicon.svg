@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
   <rect width="60" height="60" rx="13" fill="#0f0f1a"/>
-  <path d="M30 9 C32 9,44 22,44 36 A14 14 0 0 1 16 36 C16 22,28 9,30 9Z" fill="#FF4F00"/>
-  <polygon points="30,21 22,30 26,30 26,40 34,40 34,30 38,30" fill="white"/>
+  <path d="M30 8 C32 8,45 23,45 36 A15 15 0 0 1 15 36 C15 23,28 8,30 8Z" fill="#FF4F00"/>
+  <polygon points="30,20 23,30 27,30 27,42 33,42 33,30 37,30" fill="white"/>
 </svg>
